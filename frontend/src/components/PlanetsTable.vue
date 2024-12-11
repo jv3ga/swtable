@@ -15,7 +15,7 @@
 </template>
 
 <script lang="ts">
-import axios from "axios"
+import axios from '@/plugins/axios-config'
 
 export default {
   data: () => ({
