@@ -6,7 +6,7 @@
       @input="fetchData"
     />
     <v-data-table
-      v-model:page="page"
+      v-model:items-per-page="itemsPerPage"
       :items="people"
       :headers="headers"
       :items-per-page="15"
@@ -15,7 +15,7 @@
 </template>
 
 <script lang="ts">
-import axios from "axios"
+import axios from '@/plugins/axios-config'
 
 export default {
   data: () => ({
@@ -24,6 +24,7 @@ export default {
       { text: "Name", value: "name" },
       { text: "Created", value: "created" },
     ],
+    itemsPerPage: 5,
     search: "",
     page: 1,
   }),
@@ -31,13 +32,17 @@ export default {
     this.fetchData()
   },
   methods: {
-    fetchData() {
-      axios
-        .get(`/api/people`, {
-          params: { search: this.search, page: this.page },
-        })
-        .then((res) => (this.people = res.data.results))
-        .catch((err) => console.error(err))
+    async fetchData() {
+      try {
+        const result = await axios.get(`/api/people`, { params: { search: this.search, page: this.page } })
+        console.log(result)
+        if (result) {
+          this.people = result.data.results
+          console.log(this.people)
+        }
+      } catch (err) {
+        console.error(err)
+      }
     },
   },
 }
