@@ -3,7 +3,7 @@
     <v-text-field
       v-model="search"
       label="Search people"
-      @input="fetchData"
+      @input="debouncedFetch"
     />
     <v-data-table-server
       v-model:items-per-page="itemsPerPage"
@@ -12,13 +12,14 @@
       :items-length="totalItems"
       :loading="loading"
       item-value="name"
-      @update:options="fetchData"
+      @update:options="debouncedFetch"
     />
   </div>
 </template>
 
 <script lang="ts">
 import axios from '@/plugins/axios-config'
+import { debounce } from 'lodash'
 
 export default {
   data: () => ({
@@ -32,12 +33,18 @@ export default {
     loading: false,
     search: "",
     page: 1,
+    debouncedFetch: () => {},
+    seachDelayMs: 500,
   }),
   mounted() {
     this.fetchData()
   },
+  created() {
+    this.debouncedFetch = debounce(this.fetchData, this.seachDelayMs)
+  },
   methods: {
     async fetchData() {
+      console.log('fetching...')
       this.loading = true
       try {
         const result = await axios.get(`/api/people`, { params: { search: this.search, page: this.page } })
