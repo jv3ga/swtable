@@ -7,10 +7,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    copy: typeof import('./src/components/PeopleTable copy.vue')['default']
-    HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
-    PeopleTable: typeof import('./src/components/PeopleTable.vue')['default']
-    PlanetsTable: typeof import('./src/components/PlanetsTable.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SWAPITable: typeof import('./src/components/SWAPITable.vue')['default']
