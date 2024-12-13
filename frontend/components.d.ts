@@ -13,5 +13,6 @@ declare module 'vue' {
     PlanetsTable: typeof import('./src/components/PlanetsTable.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SWAPITable: typeof import('./src/components/SWAPITable.vue')['default']
   }
 }

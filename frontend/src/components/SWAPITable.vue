@@ -31,6 +31,12 @@ import axios from '@/plugins/axios-config'
 import { debounce } from 'lodash'
 
 export default {
+  props: {
+    apiUrl: {
+      type: String,
+      required: true,
+    }
+  },
   data: () => ({
     people: [],
     headers: [
@@ -63,7 +69,7 @@ export default {
     async fetchData() {
       this.loading = true
       try {
-        const result = await axios.get(`/api/people`,
+        const result = await axios.get(this.apiUrl,
         {
           params: {
             search: this.search,

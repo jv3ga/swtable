@@ -16,10 +16,14 @@
       <v-card-text>
         <v-tabs-window v-model="tab">
           <v-tabs-window-item value="people">
-            <PeopleTable />
+            <SWAPITable
+              api-url="/api/people"
+            />
           </v-tabs-window-item>
           <v-tabs-window-item value="planets">
-            <PlanetsTable />
+            <SWAPITable
+              api-url="/api/planets"
+            />
           </v-tabs-window-item>
         </v-tabs-window>
       </v-card-text>
@@ -28,11 +32,10 @@
 </template>
 
 <script lang="ts">
-import PeopleTable from './components/PeopleTable.vue'
-import PlanetsTable from './components/PlanetsTable.vue'
+import SWAPITable from './components/SWAPITable.vue';
 
 export default {
-  components: { PeopleTable, PlanetsTable },
+  components: { SWAPITable },
   data: () => ({
       tab: null,
     }),
