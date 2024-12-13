@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+    networks:
+      - app-network
+    environment:
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "${EXPOSED_PORT}:80"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
