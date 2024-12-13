@@ -35,7 +35,7 @@ export default {
     async fetchData() {
       try {
         const result = await axios.get(`/api/people`, { params: { search: this.search, page: this.page } })
-        console.log(result)
+        console.log(result.data.results.length)
         if (result) {
           this.people = result.data.results
           console.log(this.people)
