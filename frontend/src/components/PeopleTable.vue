@@ -12,7 +12,9 @@
       :items-length="totalItems"
       :loading="loading"
       item-value="name"
+      :items-per-page-options="itemsPerPageOptions"
       @update:options="debouncedFetch"
+      @update:sortBy="sortByUpdated"
     >
       <template
         #item.created="{ item }"
@@ -31,16 +33,21 @@ export default {
   data: () => ({
     people: [],
     headers: [
-      { title: "Name", value: "name", aling: "end" },
-      { title: "Created", value: "created", aling: "end" },
+      { title: "Name", value: "name", aling: "end", sortable: true },
+      { title: "Created", value: "created", aling: "end", sortable: true },
     ],
     itemsPerPage: 15,
     totalItems: 0,
     loading: false,
     search: "",
     page: 1,
+    sortBy: "name",
+    order: "desc",
     debouncedFetch: () => {},
     seachDelayMs: 500,
+    itemsPerPageOptions: [
+      {value: 15, title: '15'},
+    ]
   }),
   mounted() {
     this.fetchData()
@@ -50,14 +57,19 @@ export default {
   },
   methods: {
     async fetchData() {
-      console.log('fetching...')
       this.loading = true
       try {
-        const result = await axios.get(`/api/people`, { params: { search: this.search, page: this.page } })
-        console.log(result.data.results.length)
+        const result = await axios.get(`/api/people`,
+        {
+          params: {
+            search: this.search,
+            page: this.page,
+            sortBy: this.sortBy,
+            order: this.order,
+          }
+        })
         if (result) {
           this.people = result.data.results
-          console.log(this.people)
         }
       } catch (err) {
         console.error(err)
@@ -65,6 +77,12 @@ export default {
         this.loading = false
       }
     },
+    async sortByUpdated (value: { key: string; order: string; }[]) {
+      const valueSelected = value[0]
+      this.sortBy = valueSelected.key
+      this.order = valueSelected.order
+      await this.fetchData()
+    }
   },
 }
 </script>
