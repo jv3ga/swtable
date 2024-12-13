@@ -25,8 +25,8 @@ export default {
   data: () => ({
     people: [],
     headers: [
-      { text: "Name", value: "name" },
-      { text: "Created", value: "created" },
+      { title: "Name", value: "name", aling: "end" },
+      { title: "Created", value: "created", aling: "end" },
     ],
     itemsPerPage: 15,
     totalItems: 0,
