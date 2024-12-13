@@ -81,7 +81,6 @@ export default {
       const valueSelected = value[0]
       this.sortBy = valueSelected.key
       this.order = valueSelected.order
-      await this.fetchData()
     }
   },
 }
