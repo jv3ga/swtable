@@ -5,11 +5,14 @@
       label="Search people"
       @input="fetchData"
     />
-    <v-data-table
+    <v-data-table-server
       v-model:items-per-page="itemsPerPage"
-      :items="people"
       :headers="headers"
-      :items-per-page="15"
+      :items="people"
+      :items-length="totalItems"
+      :loading="loading"
+      item-value="name"
+      @update:options="fetchData"
     />
   </div>
 </template>
@@ -24,7 +27,9 @@ export default {
       { text: "Name", value: "name" },
       { text: "Created", value: "created" },
     ],
-    itemsPerPage: 5,
+    itemsPerPage: 15,
+    totalItems: 0,
+    loading: false,
     search: "",
     page: 1,
   }),
@@ -33,6 +38,7 @@ export default {
   },
   methods: {
     async fetchData() {
+      this.loading = true
       try {
         const result = await axios.get(`/api/people`, { params: { search: this.search, page: this.page } })
         console.log(result.data.results.length)
@@ -42,6 +48,8 @@ export default {
         }
       } catch (err) {
         console.error(err)
+      } finally {
+        this.loading = false
       }
     },
   },
