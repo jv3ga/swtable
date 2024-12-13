@@ -14,7 +14,8 @@
       item-value="name"
       :items-per-page-options="itemsPerPageOptions"
       @update:options="debouncedFetch"
-      @update:sortBy="sortByUpdated"
+      @update:sort-by="sortByUpdated"
+      @update:page="pageUpdate"
     >
       <template
         #item.created="{ item }"
@@ -43,11 +44,11 @@ export default {
     page: 1,
     sortBy: "name",
     order: "desc",
-    debouncedFetch: () => {},
-    seachDelayMs: 500,
     itemsPerPageOptions: [
       {value: 15, title: '15'},
-    ]
+    ],
+    debouncedFetch: () => {},
+    seachDelayMs: 500,
   }),
   mounted() {
     this.fetchData()
@@ -56,6 +57,9 @@ export default {
     this.debouncedFetch = debounce(this.fetchData, this.seachDelayMs)
   },
   methods: {
+    async pageUpdate (value: number) {
+      this.page = value
+    },
     async fetchData() {
       this.loading = true
       try {
@@ -70,6 +74,7 @@ export default {
         })
         if (result) {
           this.people = result.data.results
+          this.totalItems = result.data.count
         }
       } catch (err) {
         console.error(err)
