@@ -13,7 +13,13 @@
       :loading="loading"
       item-value="name"
       @update:options="debouncedFetch"
-    />
+    >
+      <template
+        #item.created="{ item }"
+      >
+        <span>{{ $filters.shortDateTime(item.created) }}</span>
+      </template>
+    </v-data-table-server>
   </div>
 </template>
 
