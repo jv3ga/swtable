@@ -1,10 +1,11 @@
 package main
 
 import (
+	"backend/handlers"
 	"log"
 	"net/http"
+
 	"github.com/gorilla/mux"
-	"backend/handlers"
 )
 
 // Middleware para manejar CORS
@@ -31,6 +32,6 @@ func main() {
 	// Envolver las rutas con el middleware CORS
 	http.Handle("/", enableCORS(r))
 
-	log.Println("Server running on port 8080")
+	log.Println("My Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

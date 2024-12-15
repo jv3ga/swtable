@@ -5,8 +5,6 @@ services:
       context: ./backend
     ports:
       - "8080:8080"
-    volumes:
-      - ./backend:/app
     networks:
       - app-network
     environment:
