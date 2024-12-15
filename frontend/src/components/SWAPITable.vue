@@ -2,13 +2,13 @@
   <div>
     <v-text-field
       v-model="search"
-      label="Search people"
+      label="Search items"
       @input="debouncedFetch"
     />
     <v-data-table-server
       v-model:items-per-page="itemsPerPage"
       :headers="headers"
-      :items="people"
+      :items="items"
       :items-length="totalItems"
       :loading="loading"
       item-value="name"
@@ -38,7 +38,7 @@ export default {
     }
   },
   data: () => ({
-    people: [],
+    items: [],
     headers: [
       { title: "Name", value: "name", aling: "end", sortable: true },
       { title: "Created", value: "created", aling: "end", sortable: true },
@@ -78,12 +78,24 @@ export default {
             order: this.order,
           }
         })
+        console.log(result)
         if (result) {
-          this.people = result.data.results
+          this.items = result.data.results
           this.totalItems = result.data.count
         }
-      } catch (err) {
-        console.error(err)
+      } catch (error) {
+        if (error.response) {
+          // El servidor respondió con un código de estado que no está en el rango 2xx
+          console.error("Error status:", error.response.status); // Código de estado
+          console.error("Error data:", error.response.data); // Mensaje de error enviado por el backend
+          console.error("Headers:", error.response.headers); // Cabeceras
+        } else if (error.request) {
+          // La solicitud fue enviada pero no hubo respuesta
+          console.error("Error request:", error.request);
+        } else {
+          // Algo ocurrió al configurar la solicitud
+          console.error("Axios error:", error.message);
+        }
       } finally {
         this.loading = false
       }

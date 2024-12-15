@@ -2,50 +2,66 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"errors"
 	"sort"
 	"strings"
 )
 
 const BaseURL = "https://swapi.dev/api"
 
-// FetchPeople retrieves people from SWAPI with filters
-func FetchPeople(query, page, sortBy, order string) (map[string]interface{}, error) {
-	url := fmt.Sprintf("%s/people/?search=%s&page=%s", BaseURL, query, page)
+type HTTPError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("HTTP %d: %s", e.StatusCode, e.Message)
+}
+
+// FetchFromSWAPI retrieves data from SWAPI with filters
+func FetchFromSWAPI(resource, query, page string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("%s/%s/?search=%s&page=%s", BaseURL, resource, query, page)
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, &HTTPError{
+			StatusCode: http.StatusInternalServerError,
+			Message:    fmt.Sprintf("error making request to SWAPI: %v", err),
+		}
 	}
 	defer resp.Body.Close()
 
-	var data map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, err
+	// Verificar el código de estado de la respuesta
+	if resp.StatusCode != http.StatusOK {
+		return nil, &HTTPError{
+			StatusCode: resp.StatusCode,
+			Message:    fmt.Sprintf("SWAPI returned non-200 status: %d", resp.StatusCode),
+		}
 	}
 
-	// Sorting logic here (optional for demonstration)
+	// Decodificar la respuesta JSON
+	var data map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, &HTTPError{
+			StatusCode: http.StatusInternalServerError,
+			Message:    fmt.Sprintf("error decoding SWAPI response: %v", err),
+		}
+	}
 
 	return data, nil
 }
 
+// FetchPeople retrieves people from SWAPI with filters
+func FetchPeople(query, page, sortBy, order string) (map[string]interface{}, error) {
+	return FetchFromSWAPI("people", query, page)
+}
 
 // FetchPlanets retrieves planets from SWAPI with filters
 func FetchPlanets(query, page, sortBy, order string) (map[string]interface{}, error) {
-	url := fmt.Sprintf("%s/planets/?search=%s&page=%s", BaseURL, query, page)
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var data map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, err
-	}
-	return data, nil
+	return FetchFromSWAPI("people", query, page)
 }
+
 // SortData ordena una lista de mapas por un campo dado y un orden (asc o desc).
 func SortData(data []map[string]interface{}, sortBy string, order string) ([]map[string]interface{}, error) {
 	if sortBy == "" {

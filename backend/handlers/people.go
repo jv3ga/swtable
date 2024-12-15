@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"backend/utils"
+	"log"
 )
 
 func GetPeople(w http.ResponseWriter, r *http.Request) {
@@ -14,10 +15,10 @@ func GetPeople(w http.ResponseWriter, r *http.Request) {
 
 	peopleResponse, err := utils.FetchPeople(query, page, sortBy, order)
 	if err != nil {
+		log.Printf("Error fetching people: %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	// Extraer el campo "results" como una lista
 	results, ok := peopleResponse["results"].([]interface{})
 	if !ok {
@@ -34,6 +35,7 @@ func GetPeople(w http.ResponseWriter, r *http.Request) {
 	// Ordenar datos si es necesario
 	sortedPeople, err := utils.SortData(people, sortBy, order)
 	if err != nil {
+		log.Printf("Error sorting data: %v\n", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
