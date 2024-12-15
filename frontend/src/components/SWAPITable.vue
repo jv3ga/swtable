@@ -1,5 +1,15 @@
 <template>
-  <div>
+  <div
+    v-if="errorMessage"
+  >
+    <v-alert
+      type="error"
+      :text="errorMessage"
+    />
+  </div>
+  <div
+    v-else
+  >
     <v-text-field
       v-model="search"
       label="Search items"
@@ -55,6 +65,7 @@ export default {
     ],
     debouncedFetch: () => {},
     seachDelayMs: 500,
+    errorMessage: '',
   }),
   mounted() {
     this.fetchData()
@@ -83,18 +94,19 @@ export default {
           this.items = result.data.results
           this.totalItems = result.data.count
         }
-      } catch (error) {
+      } catch (error: debounce) {
         if (error.response) {
           // El servidor respondió con un código de estado que no está en el rango 2xx
-          console.error("Error status:", error.response.status); // Código de estado
-          console.error("Error data:", error.response.data); // Mensaje de error enviado por el backend
-          console.error("Headers:", error.response.headers); // Cabeceras
+          console.error("Error status:", error.response.status)
+          console.error("Error data:", error.response.data)
+          console.error("Headers:", error.response.headers)
+          this.errorMessage = error.response.data
         } else if (error.request) {
           // La solicitud fue enviada pero no hubo respuesta
-          console.error("Error request:", error.request);
+          this.errorMessage = `Error request: ${error.request}`
         } else {
           // Algo ocurrió al configurar la solicitud
-          console.error("Axios error:", error.message);
+          this.errorMessage = `Axios error: ${error.message}`
         }
       } finally {
         this.loading = false
