@@ -1,4 +1,10 @@
 // Plugins
+import { mount } from '@vue/test-utils'
+import { expect, test } from 'vitest'
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+import HelloWorld from '../../src/components/HelloWorld.vue'
 import Components from 'unplugin-vue-components/vite'
 import Vue from '@vitejs/plugin-vue'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
@@ -33,6 +39,15 @@ export default defineConfig({
       },
     }),
   ],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    server: {
+      deps: {
+        inline: ['vuetify'],
+      },
+    },
+  },
   define: { 'process.env': {} },
   resolve: {
     alias: {
@@ -66,4 +81,5 @@ export default defineConfig({
       },
     },
   },
+
 })

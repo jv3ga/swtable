@@ -1,0 +1,130 @@
+import { render, fireEvent, screen, waitFor } from '@testing-library/vue';
+import '@testing-library/jest-dom';
+import axios from 'axios';
+import Component from '@/components/SWAPITable.vue';
+
+// Mock de axios
+vi.mock('axios'); // `vi` es el mock API de Vitest, similar a `jest.mock`
+
+// Mock de los filtros de Vue si es necesario
+const filters = {
+  shortDateTime: (date) => date,
+};
+
+describe('Component Tests', () => {
+  const apiUrl = 'https://example.com/api';
+
+  const mockData = {
+    data: {
+      results: [
+        { name: 'Luke Skywalker', created: '2024-01-01T00:00:00Z' },
+        { name: 'Leia Organa', created: '2024-01-02T00:00:00Z' },
+      ],
+      count: 2,
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks(); // Limpia los mocks antes de cada prueba
+  });
+
+  it('renders the search field and table', async () => {
+    axios.get.mockResolvedValueOnce(mockData);
+
+    render(Component, {
+      props: { apiUrl },
+      global: { filters },
+    });
+
+    expect(screen.getByLabelText('Search items')).toBeInTheDocument();
+    await waitFor(() => expect(axios.get).toHaveBeenCalledWith(apiUrl, expect.any(Object)));
+  });
+
+  it('fetches and displays items', async () => {
+    axios.get.mockResolvedValueOnce(mockData);
+
+    render(Component, {
+      props: { apiUrl },
+      global: { filters },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Luke Skywalker')).toBeInTheDocument();
+      expect(screen.getByText('Leia Organa')).toBeInTheDocument();
+    });
+  });
+
+  it('displays an error message on API failure', async () => {
+    axios.get.mockRejectedValueOnce({ response: { data: 'API Error' } });
+
+    render(Component, {
+      props: { apiUrl },
+      global: { filters },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('API Error')).toBeInTheDocument();
+    });
+  });
+
+  it('filters items based on search input', async () => {
+    axios.get.mockResolvedValue(mockData);
+
+    render(Component, {
+      props: { apiUrl },
+      global: { filters },
+    });
+
+    const searchField = screen.getByLabelText('Search items');
+
+    await fireEvent.update(searchField, 'Luke');
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith(apiUrl, expect.objectContaining({
+        params: expect.objectContaining({ search: 'Luke' }),
+      }));
+    });
+  });
+
+  it('supports sorting by name and created fields', async () => {
+    axios.get.mockResolvedValue(mockData);
+
+    render(Component, {
+      props: { apiUrl },
+      global: { filters },
+    });
+
+    const sortByNameButton = screen.getByText('Name');
+    const sortByCreatedButton = screen.getByText('Created');
+
+    await fireEvent.click(sortByNameButton);
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith(apiUrl, expect.objectContaining({
+        params: expect.objectContaining({ sortBy: 'name', order: 'asc' }),
+      }));
+    });
+
+    await fireEvent.click(sortByCreatedButton);
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith(apiUrl, expect.objectContaining({
+        params: expect.objectContaining({ sortBy: 'created', order: 'asc' }),
+      }));
+    });
+  });
+
+  it('paginates correctly', async () => {
+    axios.get.mockResolvedValueOnce(mockData);
+
+    render(Component, {
+      props: { apiUrl },
+      global: { filters },
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith(apiUrl, expect.objectContaining({
+        params: expect.objectContaining({ page: 2 }),
+      }));
+    });
+  });
+});
