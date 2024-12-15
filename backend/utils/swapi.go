@@ -2,105 +2,139 @@ package utils
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
-	"strings"
 )
 
 const BaseURL = "https://swapi.dev/api"
 
-type HTTPError struct {
-	StatusCode int
-	Message    string
-}
-
-func (e *HTTPError) Error() string {
-	return fmt.Sprintf("HTTP %d: %s", e.StatusCode, e.Message)
+// APIResponse defines the standard structure for API responses
+type APIResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
 }
 
 // FetchFromSWAPI retrieves data from SWAPI with filters
-func FetchFromSWAPI(resource, query, page string) (map[string]interface{}, error) {
+func FetchFromSWAPI(w http.ResponseWriter, resource, query, page, sortBy, order string) {
 	url := fmt.Sprintf("%s/%s/?search=%s&page=%s", BaseURL, resource, query, page)
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, &HTTPError{
-			StatusCode: http.StatusInternalServerError,
-			Message:    fmt.Sprintf("error making request to SWAPI: %v", err),
-		}
+		http.Error(w, fmt.Sprintf("Error making request to SWAPI: %v", err), http.StatusInternalServerError)
+		return
 	}
 	defer resp.Body.Close()
 
 	// Verificar el código de estado de la respuesta
 	if resp.StatusCode != http.StatusOK {
-		return nil, &HTTPError{
-			StatusCode: resp.StatusCode,
-			Message:    fmt.Sprintf("SWAPI returned non-200 status: %d", resp.StatusCode),
-		}
+		http.Error(w, fmt.Sprintf("SWAPI returned non-200 status: %d", resp.StatusCode), resp.StatusCode)
+		return
 	}
 
 	// Decodificar la respuesta JSON
 	var data map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, &HTTPError{
-			StatusCode: http.StatusInternalServerError,
-			Message:    fmt.Sprintf("error decoding SWAPI response: %v", err),
+		http.Error(w, fmt.Sprintf("Error decoding SWAPI response: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Validar y procesar el campo "results"
+	results, ok := data["results"].([]interface{})
+	if !ok {
+		http.Error(w, "Invalid response format from SWAPI: missing or invalid 'results' field", http.StatusInternalServerError)
+		return
+	}
+
+	// Convertir []interface{} a []map[string]interface{}
+	items := make([]map[string]interface{}, len(results))
+	for i, item := range results {
+		itemMap, valid := item.(map[string]interface{})
+		if !valid {
+			http.Error(w, "Invalid item format in results", http.StatusInternalServerError)
+			return
 		}
+		items[i] = itemMap
 	}
 
-	return data, nil
-}
-
-// FetchPeople retrieves people from SWAPI with filters
-func FetchPeople(query, page, sortBy, order string) (map[string]interface{}, error) {
-	return FetchFromSWAPI("people", query, page)
-}
-
-// FetchPlanets retrieves planets from SWAPI with filters
-func FetchPlanets(query, page, sortBy, order string) (map[string]interface{}, error) {
-	return FetchFromSWAPI("people", query, page)
-}
-
-// SortData ordena una lista de mapas por un campo dado y un orden (asc o desc).
-func SortData(data []map[string]interface{}, sortBy string, order string) ([]map[string]interface{}, error) {
-	if sortBy == "" {
-		return data, nil // Si no se especifica sortBy, devuelve los datos tal cual.
+	// Aplicar ordenación si se especifica
+	if sortBy != "" {
+		sortedItems, err := SortData(items, sortBy, order)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error sorting data: %v", err), http.StatusBadRequest)
+			return
+		}
+		data["results"] = sortedItems
+	} else {
+		data["results"] = items
 	}
 
-	// Convertir el orden a minúsculas para consistencia
-	order = strings.ToLower(order)
-	if order != "asc" && order != "desc" {
-		return nil, errors.New("invalid order: must be 'asc' or 'desc'")
+	// Enviar la respuesta ordenada
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, fmt.Sprintf("Error encoding response: %v", err), http.StatusInternalServerError)
 	}
+}
 
-	// Función de comparación genérica
+// respondWithError sends a standardized error response
+func respondWithError(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	// w.WriteHeader(http.StatusOK) // Siempre devolver 200 OK al cliente
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(APIResponse{
+		Success: false,
+		Error:   message,
+	})
+}
+
+// respondWithSuccess sends a standardized success response
+func respondWithSuccess(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(APIResponse{
+		Success: true,
+		Data:    data,
+	})
+}
+
+func FetchPeople(w http.ResponseWriter, query, page, sortBy, order string) {
+	FetchFromSWAPI(w, "people", query, page, sortBy, order)
+}
+
+func FetchPlanets(w http.ResponseWriter, query, page, sortBy, order string) {
+	FetchFromSWAPI(w, "planets", query, page, sortBy, order)
+}
+
+func SortData(data []map[string]interface{}, sortBy, order string) ([]map[string]interface{}, error) {
+	// Validar la dirección del orden (ascendente o descendente)
+	ascending := order != "desc"
+
+	// Realizar la ordenación
 	sort.Slice(data, func(i, j int) bool {
-		// Extraer los valores de los campos
-		val1, ok1 := data[i][sortBy]
-		val2, ok2 := data[j][sortBy]
-
-		// Si el campo no existe, considera que no hay orden
-		if !ok1 || !ok2 {
-			return false
+		// Comparar los valores de las claves `sortBy`
+		valI, okI := data[i][sortBy]
+		valJ, okJ := data[j][sortBy]
+		if !okI || !okJ {
+			return ascending
 		}
 
-		// Comparar como cadenas
-		str1, str1Ok := val1.(string)
-		str2, str2Ok := val2.(string)
-
-		if str1Ok && str2Ok {
-			if order == "asc" {
-				return str1 < str2
+		// Manejar diferentes tipos de valores
+		switch valI := valI.(type) {
+		case string:
+			valJ, _ := valJ.(string)
+			if ascending {
+				return valI < valJ
 			}
-			return str1 > str2
+			return valI > valJ
+		case float64:
+			valJ, _ := valJ.(float64)
+			if ascending {
+				return valI < valJ
+			}
+			return valI > valJ
+		default:
+			return ascending
 		}
-
-		// Comparar como fechas
-		if order == "asc" {
-			return val1.(string) < val2.(string)
-		}
-		return val1.(string) > val2.(string)
 	})
 
 	return data, nil
