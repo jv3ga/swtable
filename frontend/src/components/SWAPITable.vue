@@ -89,7 +89,6 @@ export default {
             order: this.order,
           }
         })
-        console.log(result)
         if (result) {
           this.items = result.data.results
           this.totalItems = result.data.count
