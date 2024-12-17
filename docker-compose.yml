@@ -9,6 +9,7 @@ services:
       - app-network
     environment:
       - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+      - BASE_URL=${BASE_URL}
 
   frontend:
     build:

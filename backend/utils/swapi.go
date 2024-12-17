@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"sort"
 )
-
-const BaseURL = "https://swapi.py4e.com/api/"
 
 // APIResponse defines the standard structure for API responses
 type APIResponse struct {
@@ -18,6 +17,7 @@ type APIResponse struct {
 
 // FetchFromSWAPI retrieves data from SWAPI with filters
 func FetchFromSWAPI(w http.ResponseWriter, resource, query, page, sortBy, order string) {
+	BaseURL := os.Getenv("BASE_URL")
 	url := fmt.Sprintf("%s/%s/?search=%s&page=%s", BaseURL, resource, query, page)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -74,14 +74,6 @@ func FetchFromSWAPI(w http.ResponseWriter, resource, query, page, sortBy, order 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, fmt.Sprintf("Error encoding response: %v", err), http.StatusInternalServerError)
 	}
-}
-
-func FetchPeople(w http.ResponseWriter, query, page, sortBy, order string) {
-	FetchFromSWAPI(w, "people", query, page, sortBy, order)
-}
-
-func FetchPlanets(w http.ResponseWriter, query, page, sortBy, order string) {
-	FetchFromSWAPI(w, "planets", query, page, sortBy, order)
 }
 
 func SortData(data []map[string]interface{}, sortBy, order string) ([]map[string]interface{}, error) {
