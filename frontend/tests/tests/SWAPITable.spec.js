@@ -33,8 +33,15 @@ describe('SWAPITable Component', () => {
     }
   }
 
+  const apiUrl = '/test-api'
+  const defaultParams = {
+    search: '',
+    page: 1,
+    sortBy: 'name',
+    order: 'desc'
+  }
+
   beforeEach(() => {
-    // Limpiar mocks antes de cada prueba
     vi.clearAllMocks()
 
     // Configurar mock de axios para devolver datos simulados
@@ -42,7 +49,7 @@ describe('SWAPITable Component', () => {
 
     wrapper = mount(SWAPITable, {
       props: {
-        apiUrl: '/test-api'
+        apiUrl: apiUrl,
       },
       global: {
         plugins: [vuetify],
@@ -51,7 +58,7 @@ describe('SWAPITable Component', () => {
     })
   })
 
-  it('renderiza el componente correctamente', async () => {
+  it('renders the component correctly', async () => {
     expect(wrapper.exists()).toBe(true)
     await nextTick()
 
@@ -60,17 +67,12 @@ describe('SWAPITable Component', () => {
     expect(dataTable.exists()).toBe(true)
   })
 
-  it('carga datos al montarse', async () => {
+  it('loads data on mount', async () => {
     await nextTick()
 
     // Verificar que axios.get se llame con los parámetros correctos
     expect(axios.get).toHaveBeenCalledWith('/test-api', {
-      params: {
-        search: '',
-        page: 1,
-        sortBy: 'name',
-        order: 'desc'
-      }
+      params: defaultParams
     })
 
     // Verificar que los items se hayan cargado
@@ -78,7 +80,7 @@ describe('SWAPITable Component', () => {
     expect(wrapper.vm.totalItems).toBe(2)
   })
 
-  it('maneja la paginación correctamente', async () => {
+  it('handles pagination correctly', async () => {
     const dataTable = wrapper.findComponent({ name: 'VDataTableServer' })
 
     // Simular cambio de página a través de update:options
@@ -105,7 +107,7 @@ describe('SWAPITable Component', () => {
   })
 
 
-  it('maneja el ordenamiento correctamente', async () => {
+  it('handles sorting correctly', async () => {
     const dataTable = wrapper.findComponent({ name: 'VDataTableServer' })
 
     // Simular cambio de ordenamiento
@@ -120,16 +122,11 @@ describe('SWAPITable Component', () => {
     expect(wrapper.vm.sortBy).toBe('created')
     expect(wrapper.vm.order).toBe('asc')
     expect(axios.get).toHaveBeenCalledWith('/test-api', {
-      params: {
-        search: '',
-        page: 1,
-        sortBy: 'created',
-        order: 'asc'
-      }
+      params: defaultParams
     })
   })
 
-  it('muestra mensaje de error cuando la carga falla', async () => {
+  it('displays an error message when loading fails', async () => {
     // Simular error de axios
     const errorMessage = 'Error de conexión'
     vi.mocked(axios.get).mockRejectedValue({
@@ -149,7 +146,7 @@ describe('SWAPITable Component', () => {
     expect(errorAlert.props('text')).toBe(errorMessage)
   })
 
-  it('aplica filtrado por búsqueda', async () => {
+  it('applies search filtering', async () => {
     const searchInput = wrapper.findComponent({ name: 'VTextField' })
 
     // Simular entrada de texto de búsqueda
@@ -168,7 +165,7 @@ describe('SWAPITable Component', () => {
   })
 
 
-  it('formatea la fecha de creación correctamente', async () => {
+  it('formats the creation date correctly', async () => {
     await nextTick()
 
     // Verificar que se llame al filtro de fecha
