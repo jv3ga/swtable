@@ -155,9 +155,8 @@ describe('SWAPITable Component', () => {
     // Simular entrada de texto de búsqueda
     await searchInput.vm.$emit('update:model-value', 'test')
 
-    // Esperar al debounce
+    // Esperar al debounce (500 ms) + margen de seguridad
     await new Promise(resolve => setTimeout(resolve, 600))
-
     expect(axios.get).toHaveBeenCalledWith('/test-api', {
       params: {
         search: 'test',
@@ -167,6 +166,7 @@ describe('SWAPITable Component', () => {
       }
     })
   })
+
 
   it('formatea la fecha de creación correctamente', async () => {
     await nextTick()

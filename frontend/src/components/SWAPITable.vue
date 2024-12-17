@@ -49,8 +49,8 @@ export default {
   data: () => ({
     items: [],
     headers: [
-      { title: "Name", value: "name", align: "end", sortable: true },
-      { title: "Created", value: "created", align: "end", sortable: true },
+      { title: "Name", value: "name", align: "left", sortable: true },
+      { title: "Created", value: "created", align: "left", sortable: true },
     ],
     itemsPerPage: 15,
     totalItems: 0,
@@ -66,8 +66,15 @@ export default {
     searchDelayMs: 500,
     errorMessage: '',
   }),
+  watch: {
+    search(newValue) {
+      this.debouncedFetch()
+    }
+  },
   mounted() {
-    this.fetchData()
+    if (!this.$isServer) {
+      this.fetchData()
+    }
   },
   created() {
     this.debouncedFetch = debounce(this.fetchData, this.searchDelayMs)
