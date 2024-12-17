@@ -81,11 +81,14 @@ describe('SWAPITable Component', () => {
   it('maneja la paginación correctamente', async () => {
     const dataTable = wrapper.findComponent({ name: 'VDataTableServer' })
 
-    // Simular cambio de página
-    await dataTable.vm.$emit('update:page', 2)
+    // Simular cambio de página a través de update:options
+    await dataTable.vm.$emit('update:options', {
+      page: 2,
+      itemsPerPage: 15
+    })
 
     // Esperar a que se actualice el estado
-    await nextTick()
+    await wrapper.vm.$nextTick()
 
     // Verificar que el número de página se haya actualizado
     expect(wrapper.vm.page).toBe(2)
@@ -100,6 +103,7 @@ describe('SWAPITable Component', () => {
       }
     })
   })
+
 
   it('maneja el ordenamiento correctamente', async () => {
     const dataTable = wrapper.findComponent({ name: 'VDataTableServer' })

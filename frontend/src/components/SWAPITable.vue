@@ -23,9 +23,8 @@
       :loading="loading"
       item-value="name"
       :items-per-page-options="itemsPerPageOptions"
-      @update:options="debouncedFetch"
+      @update:options="optionsUpdated"
       @update:sort-by="sortByUpdated"
-      @update:page="pageUpdate"
     >
       <template
         #item.created="{ item }"
@@ -76,6 +75,11 @@ export default {
   methods: {
     async pageUpdate (value: number) {
       this.page = value
+    },
+    optionsUpdated(options: { page: number; itemsPerPage: number }) {
+      this.page = options.page
+      this.itemsPerPage = options.itemsPerPage
+      this.fetchData()
     },
     async fetchData() {
       this.loading = true
