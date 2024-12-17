@@ -95,17 +95,15 @@ export default {
         }
       } catch (error: debounce) {
         if (error.response) {
-          // El servidor respondió con un código de estado que no está en el rango 2xx
           console.error("Error status:", error.response.status)
           console.error("Error data:", error.response.data)
           console.error("Headers:", error.response.headers)
           this.errorMessage = error.response.data
-        } else if (error.request) {
-          // La solicitud fue enviada pero no hubo respuesta
-          this.errorMessage = `Error request: ${error.request}`
         } else {
-          // Algo ocurrió al configurar la solicitud
-          this.errorMessage = `Axios error: ${error.message}`
+          console.error(error)
+          const errorName = error?.name ? error.name : 'Error: '
+          const errorMessage = error?.message ? error.message : error
+          this.errorMessage = `${errorName}: ${errorMessage}`
         }
       } finally {
         this.loading = false
