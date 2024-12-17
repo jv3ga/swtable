@@ -23,9 +23,32 @@ describe('SWAPITable Component Tests', () => {
     results: [
       { name: 'Luke Skywalker', created: '2024-01-01T00:00:00Z' },
       { name: 'Leia Organa', created: '2024-01-02T00:00:00Z' },
+      { name: 'Han Solo', created: '2024-01-03T00:00:00Z' },
+      { name: 'Darth Vader', created: '2024-01-04T00:00:00Z' },
+      { name: 'Obi-Wan Kenobi', created: '2024-01-05T00:00:00Z' },
+      { name: 'Yoda', created: '2024-01-06T00:00:00Z' },
+      { name: 'Palpatine', created: '2024-01-07T00:00:00Z' },
+      { name: 'Lando Calrissian', created: '2024-01-08T00:00:00Z' },
+      { name: 'Chewbacca', created: '2024-01-09T00:00:00Z' },
+      { name: 'Padmé Amidala', created: '2024-01-10T00:00:00Z' },
+      { name: 'Anakin Skywalker', created: '2024-01-11T00:00:00Z' },
+      { name: 'R2-D2', created: '2024-01-12T00:00:00Z' },
+      { name: 'C-3PO', created: '2024-01-13T00:00:00Z' },
+      { name: 'Mace Windu', created: '2024-01-14T00:00:00Z' },
+      { name: 'Qui-Gon Jinn', created: '2024-01-15T00:00:00Z' },
+      { name: 'Ahsoka Tano', created: '2024-01-16T00:00:00Z' },
+      { name: 'Boba Fett', created: '2024-01-17T00:00:00Z' },
+      { name: 'Jango Fett', created: '2024-01-18T00:00:00Z' },
+      { name: 'Rey', created: '2024-01-19T00:00:00Z' },
+      { name: 'Finn', created: '2024-01-20T00:00:00Z' },
+      { name: 'Poe Dameron', created: '2024-01-21T00:00:00Z' },
+      { name: 'Kylo Ren', created: '2024-01-22T00:00:00Z' },
+      { name: 'General Hux', created: '2024-01-23T00:00:00Z' },
+      { name: 'Rose Tico', created: '2024-01-24T00:00:00Z' },
+      { name: 'Admiral Ackbar', created: '2024-01-25T00:00:00Z' },
     ],
-    count: 2,
-  };
+    count: 25,
+  }
   const vuetify = createVuetify({
     components,
     directives,
@@ -77,6 +100,8 @@ describe('SWAPITable Component Tests', () => {
     await waitFor(() => {
       expect(screen.getByText('Luke Skywalker')).toBeInTheDocument()
       expect(screen.getByText('Leia Organa')).toBeInTheDocument()
+      // Este no debería estar porque no entra en lo de mostrar 15 elementos solamente
+      expect(screen.getByText('Admiral Ackbar')).toBeInTheDocument()
     })
   })
 
@@ -107,9 +132,7 @@ describe('SWAPITable Component Tests', () => {
   // TODO: check how the sort and next page buttons are rendered
   it('paginates correctly', async () => {
     axiosInstance.get.mockResolvedValueOnce(mockData)
-
     render(SWAPITable, defaultComponentRenderOptions)
-
     await fireEvent.click(screen.getByRole('button', { name: /next/i }))
 
     await waitFor(() => {

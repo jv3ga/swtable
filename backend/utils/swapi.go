@@ -7,7 +7,7 @@ import (
 	"sort"
 )
 
-const BaseURL = "https://swapi.dev/api"
+const BaseURL = "https://swapi.py4e.com/api/"
 
 // APIResponse defines the standard structure for API responses
 type APIResponse struct {
@@ -74,27 +74,6 @@ func FetchFromSWAPI(w http.ResponseWriter, resource, query, page, sortBy, order 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, fmt.Sprintf("Error encoding response: %v", err), http.StatusInternalServerError)
 	}
-}
-
-// respondWithError sends a standardized error response
-func respondWithError(w http.ResponseWriter, statusCode int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	// w.WriteHeader(http.StatusOK) // Siempre devolver 200 OK al cliente
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(APIResponse{
-		Success: false,
-		Error:   message,
-	})
-}
-
-// respondWithSuccess sends a standardized success response
-func respondWithSuccess(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(APIResponse{
-		Success: true,
-		Data:    data,
-	})
 }
 
 func FetchPeople(w http.ResponseWriter, query, page, sortBy, order string) {
