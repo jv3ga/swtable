@@ -1,166 +1,176 @@
-import { render, fireEvent, screen, waitFor } from '@testing-library/vue';
-import SWAPITable from '@/components/SWAPITable.vue';
-import { vi } from 'vitest';
-import { createVuetify } from 'vuetify';
-import * as components from 'vuetify/components';
-import * as directives from 'vuetify/directives';
-import axiosInstance from '@/plugins/axios-config';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+import { nextTick } from 'vue'
+import axios from '@/plugins/axios-config'
+import SWAPITable from '@/components/SWAPITable.vue'
 
-// Mock necesario para ResizeObserver en Vuetify
+// Mock de axios
+vi.mock('@/plugins/axios-config')
 global.ResizeObserver = require('resize-observer-polyfill')
 
-// Mockea la instancia de Axios
-vi.mock('@/plugins/axios-config', () => ({
-  default: {
-    get: vi.fn(), // Mockea `get`
-  },
-}))
-
-describe('SWAPITable Component Tests', () => {
-  const apiUrl = "/api/people";
-
-  const mockData = {
-    results: [
-      { name: 'Luke Skywalker', created: '2024-01-01T00:00:00Z' },
-      { name: 'Leia Organa', created: '2024-01-02T00:00:00Z' },
-      { name: 'Han Solo', created: '2024-01-03T00:00:00Z' },
-      { name: 'Darth Vader', created: '2024-01-04T00:00:00Z' },
-      { name: 'Obi-Wan Kenobi', created: '2024-01-05T00:00:00Z' },
-      { name: 'Yoda', created: '2024-01-06T00:00:00Z' },
-      { name: 'Palpatine', created: '2024-01-07T00:00:00Z' },
-      { name: 'Lando Calrissian', created: '2024-01-08T00:00:00Z' },
-      { name: 'Chewbacca', created: '2024-01-09T00:00:00Z' },
-      { name: 'Padmé Amidala', created: '2024-01-10T00:00:00Z' },
-      { name: 'Anakin Skywalker', created: '2024-01-11T00:00:00Z' },
-      { name: 'R2-D2', created: '2024-01-12T00:00:00Z' },
-      { name: 'C-3PO', created: '2024-01-13T00:00:00Z' },
-      { name: 'Mace Windu', created: '2024-01-14T00:00:00Z' },
-      { name: 'Qui-Gon Jinn', created: '2024-01-15T00:00:00Z' },
-      { name: 'Ahsoka Tano', created: '2024-01-16T00:00:00Z' },
-      { name: 'Boba Fett', created: '2024-01-17T00:00:00Z' },
-      { name: 'Jango Fett', created: '2024-01-18T00:00:00Z' },
-      { name: 'Rey', created: '2024-01-19T00:00:00Z' },
-      { name: 'Finn', created: '2024-01-20T00:00:00Z' },
-      { name: 'Poe Dameron', created: '2024-01-21T00:00:00Z' },
-      { name: 'Kylo Ren', created: '2024-01-22T00:00:00Z' },
-      { name: 'General Hux', created: '2024-01-23T00:00:00Z' },
-      { name: 'Rose Tico', created: '2024-01-24T00:00:00Z' },
-      { name: 'Admiral Ackbar', created: '2024-01-25T00:00:00Z' },
-      { name: 'ZZZZZ DO NOT SHOW', created: '2024-01-25T00:00:00Z' },
-    ],
-    count: 25,
+// Mock de filtros globales
+const mockShortDateTime = vi.fn(date => date.toISOString())
+const globalMocks = {
+  $filters: {
+    shortDateTime: mockShortDateTime
   }
-  const vuetify = createVuetify({
-    components,
-    directives,
-  })
+}
+
+describe('SWAPITable Component', () => {
+  let wrapper
+  const vuetify = createVuetify({ components, directives })
+
+  const mockAxiosResponse = {
+    data: {
+      results: [
+        { id: 1, name: 'Item 1', created: new Date('2023-01-01') },
+        { id: 2, name: 'Item 2', created: new Date('2023-02-01') }
+      ],
+      count: 2
+    }
+  }
 
   beforeEach(() => {
-    axiosInstance.get.mockReset()
-    axiosInstance.get.mockResolvedValue({ data: mockData })
-  })
+    // Limpiar mocks antes de cada prueba
+    vi.clearAllMocks()
 
-  const defaultComponentRenderOptions = {
-    props: { apiUrl },
-    global: {
-      plugins: [vuetify],
-      mocks: {
-        $filters: {
-          shortDateTime: (date) => `Formatted: ${date}`,
-        },
+    // Configurar mock de axios para devolver datos simulados
+    vi.mocked(axios.get).mockResolvedValue(mockAxiosResponse)
+
+    wrapper = mount(SWAPITable, {
+      props: {
+        apiUrl: '/test-api'
       },
-    },
-  }
-
-  it('displays fetched data correctly', async () => {
-    // Renderiza el componente con las props necesarias
-    render(SWAPITable, {
-      props: { apiUrl },
       global: {
         plugins: [vuetify],
-        mocks: {
-          $filters: {
-            shortDateTime: (date) => `Formatted: ${date}`,
-          },
-        },
-      },
-    })
-
-    // Verifica que `axiosInstance.get` haya sido llamado correctamente
-    await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenCalledWith(apiUrl, {
-        params: {
-          search: "",
-          page: 1,
-          sortBy: "name",
-          order: "desc",
-        },
-      })
-    })
-
-    await waitFor(() => {
-      expect(screen.getByText('Luke Skywalker')).toBeInTheDocument()
-      expect(screen.getByText('Leia Organa')).toBeInTheDocument()
-      // Este no debería estar porque no entra en lo de mostrar 15 elementos solamente
-      expect(screen.getByText('ZZZZZ DO NOT SHOW')).toBeInTheDocument()
+        mocks: globalMocks
+      }
     })
   })
 
-  it('displays an error message on API failure', async () => {
-    axiosInstance.get.mockRejectedValueOnce({ response: { data: 'API Error' } })
+  it('renderiza el componente correctamente', async () => {
+    expect(wrapper.exists()).toBe(true)
+    await nextTick()
 
-    render(SWAPITable, defaultComponentRenderOptions)
+    // Verificar que la tabla se renderice
+    const dataTable = wrapper.findComponent({ name: 'VDataTableServer' })
+    expect(dataTable.exists()).toBe(true)
+  })
 
-    await waitFor(() => {
-      expect(screen.getByText('API Error')).toBeInTheDocument()
+  it('carga datos al montarse', async () => {
+    await nextTick()
+
+    // Verificar que axios.get se llame con los parámetros correctos
+    expect(axios.get).toHaveBeenCalledWith('/test-api', {
+      params: {
+        search: '',
+        page: 1,
+        sortBy: 'name',
+        order: 'desc'
+      }
+    })
+
+    // Verificar que los items se hayan cargado
+    expect(wrapper.vm.items).toEqual(mockAxiosResponse.data.results)
+    expect(wrapper.vm.totalItems).toBe(2)
+  })
+
+  it('maneja la paginación correctamente', async () => {
+    const dataTable = wrapper.findComponent({ name: 'VDataTableServer' })
+
+    // Simular cambio de página
+    await dataTable.vm.$emit('update:page', 2)
+
+    // Esperar a que se actualice el estado
+    await nextTick()
+
+    // Verificar que el número de página se haya actualizado
+    expect(wrapper.vm.page).toBe(2)
+
+    // Verificar que se llame a fetchData con los parámetros correctos
+    expect(axios.get).toHaveBeenCalledWith('/test-api', {
+      params: {
+        search: '',
+        page: 2,
+        sortBy: 'name',
+        order: 'desc'
+      }
     })
   })
 
-  it('filters items based on search input', async () => {
-    axiosInstance.get.mockResolvedValue(mockData)
+  it('maneja el ordenamiento correctamente', async () => {
+    const dataTable = wrapper.findComponent({ name: 'VDataTableServer' })
 
-    render(SWAPITable, defaultComponentRenderOptions)
+    // Simular cambio de ordenamiento
+    await dataTable.vm.$emit('update:sort-by', [{
+      key: 'created',
+      order: 'asc'
+    }])
 
-    const searchField = screen.getByLabelText('Search items')
+    // Esperar a que se actualice el estado
+    await nextTick()
 
-    await fireEvent.update(searchField, 'Luke')
-    await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenCalledWith(apiUrl, expect.objectContaining({
-        params: expect.objectContaining({ search: 'Luke' }),
-      }))
+    expect(wrapper.vm.sortBy).toBe('created')
+    expect(wrapper.vm.order).toBe('asc')
+    expect(axios.get).toHaveBeenCalledWith('/test-api', {
+      params: {
+        search: '',
+        page: 1,
+        sortBy: 'created',
+        order: 'asc'
+      }
     })
   })
-  // TODO: check how the sort and next page buttons are rendered
-  it('paginates correctly', async () => {
-    axiosInstance.get.mockResolvedValueOnce(mockData)
-    render(SWAPITable, defaultComponentRenderOptions)
-    await fireEvent.click(screen.getByRole('button', { name: /next/i }))
 
-    await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenCalledWith(apiUrl, expect.objectContaining({
-        params: expect.objectContaining({ page: 2 }),
-      }))
+  it('muestra mensaje de error cuando la carga falla', async () => {
+    // Simular error de axios
+    const errorMessage = 'Error de conexión'
+    vi.mocked(axios.get).mockRejectedValue({
+      response: {
+        status: 500,
+        data: errorMessage
+      }
+    })
+
+    // Forzar recarga de datos
+    await wrapper.vm.fetchData()
+
+    // Verificar que se muestre el mensaje de error
+    expect(wrapper.vm.errorMessage).toBe(errorMessage)
+    const errorAlert = wrapper.findComponent({ name: 'VAlert' })
+    expect(errorAlert.exists()).toBe(true)
+    expect(errorAlert.props('text')).toBe(errorMessage)
+  })
+
+  it('aplica filtrado por búsqueda', async () => {
+    const searchInput = wrapper.findComponent({ name: 'VTextField' })
+
+    // Simular entrada de texto de búsqueda
+    await searchInput.vm.$emit('update:model-value', 'test')
+
+    // Esperar al debounce
+    await new Promise(resolve => setTimeout(resolve, 600))
+
+    expect(axios.get).toHaveBeenCalledWith('/test-api', {
+      params: {
+        search: 'test',
+        page: 1,
+        sortBy: 'name',
+        order: 'desc'
+      }
     })
   })
-  it('supports sorting by name and created fields', async () => {
-    axiosInstance.get.mockResolvedValue(mockData)
-    render(SWAPITable, defaultComponentRenderOptions)
-    const sortByNameButton = screen.getByText('Name');
-    const sortByCreatedButton = screen.getByText('Created');
 
-    await fireEvent.click(sortByNameButton);
-    await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenCalledWith(apiUrl, expect.objectContaining({
-        params: expect.objectContaining({ sortBy: 'name', order: 'asc' }),
-      }));
-    });
+  it('formatea la fecha de creación correctamente', async () => {
+    await nextTick()
 
-    await fireEvent.click(sortByCreatedButton);
-    await waitFor(() => {
-      expect(axiosInstance.get).toHaveBeenCalledWith(apiUrl, expect.objectContaining({
-        params: expect.objectContaining({ sortBy: 'created', order: 'asc' }),
-      }));
-    });
-  });
-
+    // Verificar que se llame al filtro de fecha
+    expect(mockShortDateTime).toHaveBeenCalledTimes(2)
+    expect(mockShortDateTime).toHaveBeenCalledWith(
+      new Date('2023-01-01')
+    )
+  })
 })
