@@ -46,6 +46,7 @@ describe('SWAPITable Component Tests', () => {
       { name: 'General Hux', created: '2024-01-23T00:00:00Z' },
       { name: 'Rose Tico', created: '2024-01-24T00:00:00Z' },
       { name: 'Admiral Ackbar', created: '2024-01-25T00:00:00Z' },
+      { name: 'ZZZZZ DO NOT SHOW', created: '2024-01-25T00:00:00Z' },
     ],
     count: 25,
   }
@@ -101,7 +102,7 @@ describe('SWAPITable Component Tests', () => {
       expect(screen.getByText('Luke Skywalker')).toBeInTheDocument()
       expect(screen.getByText('Leia Organa')).toBeInTheDocument()
       // Este no debería estar porque no entra en lo de mostrar 15 elementos solamente
-      expect(screen.getByText('Admiral Ackbar')).toBeInTheDocument()
+      expect(screen.getByText('ZZZZZ DO NOT SHOW')).toBeInTheDocument()
     })
   })
 

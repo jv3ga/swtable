@@ -50,8 +50,8 @@ export default {
   data: () => ({
     items: [],
     headers: [
-      { title: "Name", value: "name", aling: "end", sortable: true },
-      { title: "Created", value: "created", aling: "end", sortable: true },
+      { title: "Name", value: "name", align: "end", sortable: true },
+      { title: "Created", value: "created", align: "end", sortable: true },
     ],
     itemsPerPage: 15,
     totalItems: 0,
@@ -64,14 +64,14 @@ export default {
       {value: 15, title: '15'},
     ],
     debouncedFetch: () => {},
-    seachDelayMs: 500,
+    searchDelayMs: 500,
     errorMessage: '',
   }),
   mounted() {
     this.fetchData()
   },
   created() {
-    this.debouncedFetch = debounce(this.fetchData, this.seachDelayMs)
+    this.debouncedFetch = debounce(this.fetchData, this.searchDelayMs)
   },
   methods: {
     async pageUpdate (value: number) {
@@ -93,7 +93,7 @@ export default {
           this.items = result.data.results
           this.totalItems = result.data.count
         }
-      } catch (error: debounce) {
+      } catch (error: any) {
         if (error.response) {
           console.error("Error status:", error.response.status)
           console.error("Error data:", error.response.data)
@@ -102,18 +102,23 @@ export default {
         } else {
           console.error(error)
           const errorName = error?.name ? error.name : 'Error: '
-          const errorMessage = error?.message ? error.message : error
+          const errorMessage = typeof error.response?.data === 'string'
+          ? error.response.data
+          : 'An unexpected error occurred';
           this.errorMessage = `${errorName}: ${errorMessage}`
         }
       } finally {
         this.loading = false
       }
     },
-    async sortByUpdated (value: { key: string; order: string; }[]) {
-      const valueSelected = value[0]
-      this.sortBy = valueSelected.key
-      this.order = valueSelected.order
-    }
+    async sortByUpdated(value: { key: string; order: string }[]) {
+      if (value.length > 0) {
+        const valueSelected = value[0];
+        this.sortBy = valueSelected.key;
+        this.order = valueSelected.order;
+        this.fetchData();
+      }
+    },
   },
 }
 </script>
